@@ -121,8 +121,8 @@ end)
 local SoloValue = Workspace:WaitForChild("GameProperties"):WaitForChild("Solo")
 
 SoloValue:GetPropertyChangedSignal("Value"):Connect(function()
-	if SoloValue.Value then
-		fadeOutToEnd(CustomSound)
-		print("Solo triggered – Custom Rage stopped")
-	end
+    if SoloValue.Value then
+        fadeOutToEnd(CustomSound)
+        print("Solo triggered – Custom Rage stopped")
+    end
 end)
