@@ -70,82 +70,57 @@ end
 local Assets = Workspace:WaitForChild("Assets")
 local Songs = Assets:WaitForChild("Songs")
 
-local function hookRage(rage)
-	if not rage:IsA("Sound") or rage.Name ~= "Rage" then return end
+local SoloTracks = {
+	"AmySolo", "BlazeSolo", "CreamSolo", "EggmanSolo", 
+	"KnucklesSolo", "MetalSonicSolo", "SilverSolo", "SonicSolo", "TailsSolo"
+}
 
-	print("Rage detected:", rage:GetFullName())
+local function hookSound(sound)
+	if not sound:IsA("Sound") then return end
 
-	copyEffects(rage, CustomSound)
+	local name = sound.Name
+	if name == "Rage" or table.find(SoloTracks, name) then
+		print(name, "detected:", sound:GetFullName())
 
-	local rageGroup = rage.SoundGroup
-	local rageVolume = (rage.Volume > 0 and rage.Volume or 1) * Config.LoudnessMultiplier
+		copyEffects(sound, CustomSound)
+		local soundGroup = sound.SoundGroup
+		local soundVolume = (sound.Volume > 0 and sound.Volume or 1) * Config.LoudnessMultiplier
 
-	rage:GetPropertyChangedSignal("Playing"):Connect(function()
-		if rage.Playing then
-			rage.Volume = 0
-			CustomSound.SoundGroup = rageGroup
-			CustomSound.Volume = rageVolume
-			if not CustomSound.IsPlaying then
-				print("Custom Rage playing")
-				CustomSound:Play()
+		sound:GetPropertyChangedSignal("Playing"):Connect(function()
+			if sound.Playing then
+				sound.Volume = 0
+				CustomSound.SoundGroup = soundGroup
+				CustomSound.Volume = soundVolume
+				if not CustomSound.IsPlaying then
+					print("Custom", name, "playing")
+					CustomSound:Play()
+				end
+			else
+				fadeOutToEnd(CustomSound)
 			end
-		else
-			fadeOutToEnd(CustomSound)
-		end
-	end)
+		end)
 
-	if rage.Playing then
-		rage.Volume = 0
-		CustomSound.SoundGroup = rageGroup
-		CustomSound.Volume = rageVolume
-		CustomSound:Play()
+		if sound.Playing then
+			sound.Volume = 0
+			CustomSound.SoundGroup = soundGroup
+			CustomSound.Volume = soundVolume
+			CustomSound:Play()
+		end
 	end
 end
 
 for _, obj in ipairs(Songs:GetDescendants()) do
-	hookRage(obj)
+	hookSound(obj)
 end
 
 Songs.DescendantAdded:Connect(function(obj)
 	task.wait()
-	hookRage(obj)
+	hookSound(obj)
 end)
 
 Songs.DescendantRemoving:Connect(function(obj)
-	if obj:IsA("Sound") and obj.Name == "Rage" then
+	if obj:IsA("Sound") and (obj.Name == "Rage" or table.find(SoloTracks, obj.Name)) then
 		fadeOutToEnd(CustomSound)
-		print("Rage removed from Songs – Custom Rage stopped")
-	end
-end)
-
-local GameProperties = Workspace:WaitForChild("GameProperties")
-
-local function connectSolo(solo)
-	if not solo:IsA("BoolValue") then return end
-
-	-- Fade out immediately if already true
-	if solo.Value then
-		fadeOutToEnd(CustomSound)
-		print("Solo triggered – Custom Rage stopped (already true)")
-	end
-
-	solo:GetPropertyChangedSignal("Value"):Connect(function()
-		if solo.Value then
-			fadeOutToEnd(CustomSound)
-			print("Solo triggered – Custom Rage stopped")
-		end
-	end)
-end
-
--- Connect initial Solo
-local initialSolo = GameProperties:FindFirstChild("Solo")
-if initialSolo then
-	connectSolo(initialSolo)
-end
-
--- Reconnect if Solo is replaced
-GameProperties.ChildAdded:Connect(function(child)
-	if child.Name == "Solo" then
-		connectSolo(child)
+		print(obj.Name, "removed – Custom sound stopped")
 	end
 end)
