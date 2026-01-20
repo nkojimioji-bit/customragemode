@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 local Config = {
 	Url = "https://raw.githubusercontent.com/nkojimioji-bit/customragemode/main/READYORNOTHARDCORE.mp3",
 	FileName = "READYORNOTHARDCORE.mp3",
-	Volume = 2,
+	Volume = 4,
 	LoudnessMultiplier = 2.5
 }
 
