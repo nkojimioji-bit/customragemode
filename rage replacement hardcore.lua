@@ -118,11 +118,34 @@ Songs.DescendantRemoving:Connect(function(obj)
 	end
 end)
 
-local SoloValue = Workspace:WaitForChild("GameProperties"):WaitForChild("Solo")
+local GameProperties = Workspace:WaitForChild("GameProperties")
 
-SoloValue:GetPropertyChangedSignal("Value"):Connect(function()
-    if SoloValue.Value then
-        fadeOutToEnd(CustomSound)
-        print("Solo triggered – Custom Rage stopped")
-    end
+local function connectSolo(solo)
+	if not solo:IsA("BoolValue") then return end
+
+	-- Fade out immediately if already true
+	if solo.Value then
+		fadeOutToEnd(CustomSound)
+		print("Solo triggered – Custom Rage stopped (already true)")
+	end
+
+	solo:GetPropertyChangedSignal("Value"):Connect(function()
+		if solo.Value then
+			fadeOutToEnd(CustomSound)
+			print("Solo triggered – Custom Rage stopped")
+		end
+	end)
+end
+
+-- Connect initial Solo
+local initialSolo = GameProperties:FindFirstChild("Solo")
+if initialSolo then
+	connectSolo(initialSolo)
+end
+
+-- Reconnect if Solo is replaced
+GameProperties.ChildAdded:Connect(function(child)
+	if child.Name == "Solo" then
+		connectSolo(child)
+	end
 end)
