@@ -56,6 +56,20 @@ local function copyEffects(fromSound, toSound)
 	end
 end
 
+local function fadeOutToEnd(sound)
+	if not sound.IsPlaying then return end
+	local remaining = math.max(sound.TimeLength - sound.TimePosition, 0.01)
+	local tweenInfo = TweenInfo.new(remaining, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(sound, tweenInfo, {Volume = 0})
+	tween:Play()
+	tween.Completed:Wait()
+	sound:Stop()
+	sound.Volume = Config.Volume
+end
+
+local Assets = Workspace:WaitForChild("Assets")
+local Songs = Assets:WaitForChild("Songs")
+
 local function hookRage(rage)
 	if not rage:IsA("Sound") or rage.Name ~= "Rage" then return end
 
@@ -76,7 +90,7 @@ local function hookRage(rage)
 				CustomSound:Play()
 			end
 		else
-			CustomSound:Stop()
+			fadeOutToEnd(CustomSound)
 		end
 	end)
 
@@ -88,11 +102,6 @@ local function hookRage(rage)
 	end
 end
 
-local Assets = Workspace:WaitForChild("Assets")
-local Songs = Assets:WaitForChild("Songs")
-
-warn("Watching workspace.Assets.Songs for Rage music")
-
 for _, obj in ipairs(Songs:GetDescendants()) do
 	hookRage(obj)
 end
@@ -100,4 +109,20 @@ end
 Songs.DescendantAdded:Connect(function(obj)
 	task.wait()
 	hookRage(obj)
+end)
+
+Songs.DescendantRemoving:Connect(function(obj)
+	if obj:IsA("Sound") and obj.Name == "Rage" then
+		fadeOutToEnd(CustomSound)
+		print("Rage removed from Songs – Custom Rage stopped")
+	end
+end)
+
+local SoloValue = Workspace:WaitForChild("GameProperties"):WaitForChild("Solo")
+
+SoloValue:GetPropertyChangedSignal("Value"):Connect(function()
+	if SoloValue.Value then
+		fadeOutToEnd(CustomSound)
+		print("Solo triggered – Custom Rage stopped")
+	end
 end)
